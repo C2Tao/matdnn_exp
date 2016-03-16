@@ -194,8 +194,8 @@ def get_xyz(l, t):
     return x, y, z
     
 if __name__=='__main__':
-    l = l_list[1]
-    t = t_list[1]
+    l = l_list[0]
+    t = t_list[4]
     if l=='eng':    
         m_list = [3,5,7]
     else: 
@@ -215,7 +215,7 @@ if __name__=='__main__':
     x_list = np.array(m_list)
     y_list = np.array(n_list)
     x, y, z = get_xyz(l, t)
-    z_max = max(z)
+    zmin, zmax = min(z), max(z)
     z_list = z.reshape(x_list.shape[0],y_list.shape[0])
     
     xi = np.linspace(m_min, m_max, inter)
@@ -254,11 +254,12 @@ if __name__=='__main__':
     plt.figure()
     #CS = plt.contourf(xv, yv, inter_near(x,y,z,xv,yv))
     #CS = plt.contourf(xv, yv, inter_rbfi(x,y,z,xv,yv))
-    #CS = plt.contourf(xv, yv, inter_2dsp(x,y,z,xv,yv))
+    #CS = plt.contourf(xv, yv, inter_2dsp(x,y,z,xv,yv),100,vmin=zmin, vmax=zmax)
+    CS = plt.contourf(xv, yv, inter_2dsp(x,y,z,xv,yv),100,vmin=zmin, vmax=zmax)
     #CS = plt.contourf(xv, yv, inter_cube(x,y,z,xv,yv))
     #colors = cm.rainbow(np.linspace(0, 1, 10))   
-    plt.scatter(xv, yv, c=inter_2dsp(x,y,z,xv,yv), vmin=0, vmax=z_max)
-    plt.colorbar()
+    #plt.scatter(xv, yv, c=inter_2dsp(x,y,z,xv,yv), vmin=zmin, vmax=zmax)
+    #plt.colorbar()
     plt.scatter(x, y)
     
     #plt.clabel(CS, inline=1, fontsize=10)
