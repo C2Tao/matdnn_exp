@@ -1,6 +1,9 @@
 import sys
 import cPickle as pickle
 import numpy as np 
+from scipy.interpolate import RectBivariateSpline
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 info_text ='''\
 eng iter1_MR0_50_3 0.170633116433
 eng iter1_MR1_50_3 0.152116919102
@@ -172,8 +175,14 @@ info = get_info()
 
 t_list = ['iter1_MR0', 'iter1_MR1', 'iter1_MR2', 'iter2_MR0', 'iter2_MR1']
 l_list = ['eng', 'xit'] 
-m_list =  [3,5,7,9]#[3,5,7] for english
 n_list =  [50, 100, 300, 500]
+
+def get_m_list(l):
+    if l=='eng':    
+        m_list = [3,5,7]
+    else: 
+        m_list = [3,5,7,9]
+    return m_list
 
 def get_map(l, t, m, n):
     key = '_'.join([l, t, str(n), str(m)])
@@ -181,95 +190,91 @@ def get_map(l, t, m, n):
 
 def get_xyz(l, t):
     x, y, z = [], [], []
-    if l=='eng':    
-        m_list = [3,5,7]
-    else: 
-        m_list = [3,5,7,9]
-    for m in m_list:
+    for m in get_m_list(l):
         for n in n_list:
             x.append(m)
             y.append(n)
             z.append(get_map(l,t,m,n))
     x, y, z = map(lambda f: np.array(f, dtype=np.float32), [x,y,z])
     return x, y, z
-    
+def get_zlim(l):
+    z = []
+    for m in get_m_list(l):
+        for n in n_list:
+            for t in t_list:
+                z.append(get_map(l,t,m,n))
+    return min(z), max(z)
 if __name__=='__main__':
-    l = l_list[0]
-    t = t_list[4]
-    if l=='eng':    
-        m_list = [3,5,7]
-    else: 
-        m_list = [3,5,7,9]
-    for n in n_list:
-        for m in m_list:
-            print get_map(l,t, m, n)
+    #l = l_list[0]
+    #t = t_list[0]
     
 
     m_min, m_max = 0, 11
     n_min, n_max = 0, 600 
-    inter = 100
+    plot_density = 100
+    cont_density = 100
     
-    #x_list = np.array([m_min]+ m_list+ [m_max])
-    #y_list = np.array([n_min]+ n_list+ [n_max])
-    
-    x_list = np.array(m_list)
-    y_list = np.array(n_list)
-    x, y, z = get_xyz(l, t)
-    zmin, zmax = min(z), max(z)
-    z_list = z.reshape(x_list.shape[0],y_list.shape[0])
-    
-    xi = np.linspace(m_min, m_max, inter)
-    yi = np.linspace(n_min, n_max, inter)
-    xv, yv = np.meshgrid(xi, yi)
-    
-    print x,y,z
-    print xv.shape, yv.shape
+    def plot_cont(l, t, ax, zlim):
+        x_list = np.array(get_m_list(l))
+        y_list = np.array(n_list)
+        x, y, z = get_xyz(l, t)
+        
+        #zmin, zmax = min(z), max(z)
+        zmin, zmax = zlim
+        
+        z_list = z.reshape(x_list.shape[0],y_list.shape[0])
+        
+        xi = np.linspace(m_min, m_max, plot_density)
+        yi = np.linspace(n_min, n_max, plot_density)
+        xv, yv = np.meshgrid(xi, yi)
+        
+        #print x,y,z
+        #print xv.shape, yv.shape
+        #print xi, yi
 
-    def inter_2dsp(x,y,z,xv,yv):
-        from scipy.interpolate import RectBivariateSpline
         rbs = RectBivariateSpline(x_list,y_list,z_list,kx=2,ky=2)#,bbox = [m_min, m_max, n_min, n_max])
         zv = rbs(xi,yi)
-        print zv.shape
-        return zv
-    def inter_near(x,y,z,xv,yv):
-        from scipy.interpolate import griddata
-        zv = griddata((x, y), z, (xv, yv), method='nearest')
-        return zv
-    def inter_cube(x,y,z,xv,yv):
-        from scipy.interpolate import griddata
-        zv = griddata((x, y), z, (xv, yv), method='cubic')
-        return zv
-    def inter_rbfi(x,y,z,xv,yv):
-        from scipy.interpolate import Rbf
-        rbfi = Rbf(x, y, z)
-        zv = rbfi(xv, yv)
-        return zv
-    
-    def plot_cont():
-        plt.contour
+     
+        CS = ax.contourf(xv, yv, zv, cont_density, vmin=zmin, vmax=zmax)
+        #plt.colorbar(CS)
+        ax.scatter(x, y, facecolor='w')
+        ax.set_title(t)
+        ax.set_xlim([m_min, m_max])
+        ax.set_ylim([n_min, n_max])
         return CS 
- 
-    import matplotlib.pyplot as plt
-    import matplotlib.cm as cm
-    plt.figure()
-    #CS = plt.contourf(xv, yv, inter_near(x,y,z,xv,yv))
-    #CS = plt.contourf(xv, yv, inter_rbfi(x,y,z,xv,yv))
-    #CS = plt.contourf(xv, yv, inter_2dsp(x,y,z,xv,yv),100,vmin=zmin, vmax=zmax)
-    CS = plt.contourf(xv, yv, inter_2dsp(x,y,z,xv,yv),100,vmin=zmin, vmax=zmax)
-    #CS = plt.contourf(xv, yv, inter_cube(x,y,z,xv,yv))
-    #colors = cm.rainbow(np.linspace(0, 1, 10))   
-    #plt.scatter(xv, yv, c=inter_2dsp(x,y,z,xv,yv), vmin=zmin, vmax=zmax)
-    #plt.colorbar()
-    plt.scatter(x, y)
+        #plt.clabel(CS, inline=1, fontsize=10)
+        #plt.xticks(x_list, map(str,x_list), rotation='vertical')
+        #plt.yticks(y_list, map(str,y_list))
+        #plt.imshow(grid_0.T)
+        #plt.gcf().set_size_inches(6, 6)
     
-    #plt.clabel(CS, inline=1, fontsize=10)
-    plt.title('Simplest default with labels')
-    #plt.xticks(mp_list, map(str,mp_list), rotation='vertical')
-    #plt.yticks(np_list, map(str,np_list))
-    #plt.imshow(grid_0.T)
-    #plt.gcf().set_size_inches(6, 6)
+    l = 'xit'
+    fig, axarr = plt.subplots(2, 3)
+    zlim = get_zlim(l)
+    #zlim = [0,.5]
+    #f, ((ax1, ax2, ax3),(ax4, ax5, ax6)) = plt.subplots(2, 3, sharex=True, sharey=True)
+    for i in range(5):
+        CS = plot_cont(l, t_list[i], axarr[i/3,i%3], zlim)
+    for p in [(0,0),(0,1),(1,2)]:
+        plt.setp(axarr[p].get_xticklabels(), visible=False)
+    for p in [(0,1),(0,2),(1,1),(1,2)]:
+        plt.setp(axarr[p].get_yticklabels(), visible=False)
+    for p in [(1,2)]:
+        plt.setp(axarr[p].get_axes(), visible=False)
+        #fig.colorbar(CS ,axarr[p].get_axes())
+    cbar_ax = fig.add_axes([0.75, 0.12, 0.05, 0.3])
+    CS.set_clim(zlim)
+    plt.colorbar(CS, cax=cbar_ax)
+
+    #plt.setp([a.get_xticklabels() for a in axarr[0,:]],visible=False)
+    #plt.setp([a.get_yticklabels() for a in axarr[:,1]],visible=False)
+    #plt.setp([a.get_yticklabels() for a in axarr[:,2]],visible=False)
+    
+    #fig.subplots_adjust(right=0.8)
+    #cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+    #fig.colorbar(CS, cax=cbar_ax)
+    
     plt.show()
-    
     ''' 
     def func(x, y):
         return x*(1-x)*np.cos(4*np.pi*x) * np.sin(4*np.pi*y**2)**2
