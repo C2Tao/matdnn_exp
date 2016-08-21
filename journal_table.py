@@ -208,103 +208,25 @@ def get_zlim(l):
             for t in t_list:
                 z.append(get_map(l,t,m,n))
     return min(z), max(z)
+
+def get_stats(val):
+    vals = np.array(val)*100
+    x0 = "& {:.2f}"*4
+    x1 = x0.format(np.mean(vals), np.std(vals), np.max(vals), np.min(vals))
+    x2 = x1#+ '\\\\'
+    return x2 
 if __name__=='__main__':
-    #l = l_list[0]
-    #t = t_list[0]
-    
-
-    m_min, m_max = 0, 11
-    n_min, n_max = 0, 600 
-    plot_density = 100
-    cont_density = 100
-    
-    def plot_cont(l, t, ax, zlim):
-        x_list = np.array(get_m_list(l))
-        y_list = np.array(n_list)
-        x, y, z = get_xyz(l, t)
-        
-        #zmin, zmax = min(z), max(z)
-        zmin, zmax = zlim
-        
-        z_list = z.reshape(x_list.shape[0],y_list.shape[0])
-        
-        xi = np.linspace(m_min, m_max, plot_density)
-        yi = np.linspace(n_min, n_max, plot_density)
-        xv, yv = np.meshgrid(xi, yi)
-        
-        #print x,y,z
-        #print xv.shape, yv.shape
-        #print xi, yi
-
-        rbs = RectBivariateSpline(x_list,y_list,z_list,kx=2,ky=2)#,bbox = [m_min, m_max, n_min, n_max])
-        zv = rbs(xi,yi)
-     
-        CS = ax.contourf(xv, yv, zv, cont_density, vmin=zmin, vmax=zmax)
-        #plt.colorbar(CS)
-        ax.scatter(x, y, facecolor='w')
-        ax.set_title(full[t])
-        ax.set_xlim([m_min, m_max])
-        ax.set_ylim([n_min, n_max])
-        return CS 
-        #plt.clabel(CS, inline=1, fontsize=10)
-        #plt.xticks(x_list, map(str,x_list), rotation='vertical')
-        #plt.yticks(y_list, map(str,y_list))
-        #plt.imshow(grid_0.T)
-        #plt.gcf().set_size_inches(6, 6)
-    
-    l ='xit'
-    fig, axarr = plt.subplots(2, 3)
-    zlim = get_zlim(l)
-    #zlim = [0,.5]
-    #f, ((ax1, ax2, ax3),(ax4, ax5, ax6)) = plt.subplots(2, 3, sharex=True, sharey=True)
-    for i in range(5):
-        CS = plot_cont(l, t_list[i], axarr[i/3,i%3], zlim)
-    for p in [(0,0),(0,1),(1,2)]:
-        plt.setp(axarr[p].get_xticklabels(), visible=False)
-    for p in [(0,1),(0,2),(1,1),(1,2)]:
-        plt.setp(axarr[p].get_yticklabels(), visible=False)
-    for p in [(1,2)]:
-        plt.setp(axarr[p].get_axes(), visible=False)
-        #fig.colorbar(CS ,axarr[p].get_axes())
-    cbar_ax = fig.add_axes([0.75, 0.12, 0.05, 0.3])
-    CS.set_clim(zlim)
-    plt.colorbar(CS, cax=cbar_ax)
-
-    #plt.setp([a.get_xticklabels() for a in axarr[0,:]],visible=False)
-    #plt.setp([a.get_yticklabels() for a in axarr[:,1]],visible=False)
-    #plt.setp([a.get_yticklabels() for a in axarr[:,2]],visible=False)
-    
-    #fig.subplots_adjust(right=0.8)
-    #cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
-    #fig.colorbar(CS, cax=cbar_ax)
-    
-    plt.show()
-    ''' 
-    def func(x, y):
-        return x*(1-x)*np.cos(4*np.pi*x) * np.sin(4*np.pi*y**2)**2
-    grid_x, grid_y = np.mgrid[0:1:100j, 0:1:200j]
-
-    points = np.random.rand(1000, 2)
-    values = func(points[:,0], points[:,1])
-
-    from scipy.interpolate import griddata
-    grid_z0 = griddata(points, values, (grid_x, grid_y), method='nearest')
-    grid_z1 = griddata(points, values, (grid_x, grid_y), method='linear')
-    grid_z2 = griddata(points, values, (grid_x, grid_y), method='cubic')
-    import matplotlib.pyplot as plt
-    plt.subplot(221)
-    plt.imshow(func(grid_x, grid_y).T, extent=(0,1,0,1), origin='lower')
-    plt.plot(points[:,0], points[:,1], 'k.', ms=1)
-    plt.title('Original')
-    plt.subplot(222)
-    plt.imshow(grid_z0.T, extent=(0,1,0,1), origin='lower')
-    plt.title('Nearest')
-    plt.subplot(223)
-    plt.imshow(grid_z1.T, extent=(0,1,0,1), origin='lower')
-    plt.title('Linear')
-    plt.subplot(224)
-    plt.imshow(grid_z2.T, extent=(0,1,0,1), origin='lower')
-    plt.title('Cubic')
-    plt.gcf().set_size_inches(6, 6)
-    plt.show()
-    '''
+    all_maps = []
+    for l in ['eng', 'xit']:
+        lan_maps = []
+        for t in t_list:
+            maps = [] 
+            for m in get_m_list(l):
+                for n in n_list: 
+                    maps.append(get_map(l, t, m, n))
+                    all_maps.append(get_map(l, t, m, n))
+                    lan_maps.append(get_map(l, t, m, n))
+            #print l, t, get_stats(maps)
+            print get_stats(maps)
+        #print l, get_stats(lan_maps)
+    #print get_stats(all_maps)
