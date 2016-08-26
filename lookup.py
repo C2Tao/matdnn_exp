@@ -1,6 +1,7 @@
 import dtw
 import ph_dist 
 import qd_parse
+import su_parse
 
 def generate_doc_list():
     '''
@@ -34,6 +35,22 @@ def generate_tok_list():
     tok_list = qd_parse.generate_tok_list()
     return tok_list
 
+def generate_lan_list():
+    '''
+    format: languagetype:[eng,xit]
+    example: eng
+    '''
+    lan_list = su_parse.generate_lan_list()
+    return lan_list
+
+def generate_phn_list():
+    '''
+    format: phonemetype:[EN,HU,CZ,RU]
+    example: EN
+    '''
+    phn_list = su_parse.generate_phn_list()
+    return phn_list
+
 #def parse_tok_distance(tok):
 #    distanc = ph_dist.get_dm(tok)
 #    return distanc
@@ -54,6 +71,14 @@ def parse_qer_pattern(qer, tok):
     qer_pattern = qd_parse.parse_qer_pattern(qer, tok)
     return qer_pattern
 
+def parse_doc_phoneme(doc, phn):
+    doc_phoneme = su_parse.parse_doc_phoneme(doc, phn)
+    return doc_phoneme
+
+def parse_qer_phoneme(qer, phn):
+    qer_phoneme = su_parse.parse_qer_phoneme(qer, phn)
+    return qer_phoneme
+
 def warp_feature(qer_feature, doc_feature):
     distance = dtw.feature_dtw(qer_feature, doc_feature)
     return distance
@@ -67,6 +92,8 @@ doc_list = generate_doc_list()
 qer_list = generate_qer_list()
 tok_list = generate_tok_list()
 ftp_list = generate_ftp_list()
+lan_list = generate_lan_list()
+phn_list = generate_phn_list()
 '''
 print doc_list[0]
 print qer_list[0]

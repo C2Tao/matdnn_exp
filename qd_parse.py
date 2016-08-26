@@ -13,16 +13,19 @@ ph_dist_path = r'/home/c2tao/asru_2015/ph_dist/'
 zrc_path = r'/home/c2tao/ZRC/'
 zrc_data_path = r'/home/c2tao/ZRC_data/'
 
-def find_white(lan):
-    M = util.MLF(zrc_path+lan+'/iter1/MR0/50_3/result/result.mlf')
-    return  M.wav_list
-white = find_white('eng') + find_white('xit')
+def get_doc_list():
+    def find_white(lan):
+        M = util.MLF(zrc_path+lan+'/iter1/MR0/50_3/result/result.mlf')
+        return  M.wav_list
+    white = find_white('eng') + find_white('xit')
 
-doc_list = []
-doc_list += map(lambda x: 'eng_'+x,find_white('eng'))
-doc_list += map(lambda x: 'xit_'+x,find_white('xit'))
+    doc_list = []
+    doc_list += map(lambda x: 'eng_'+x,find_white('eng'))
+    doc_list += map(lambda x: 'xit_'+x,find_white('xit'))
+    return doc_list, white
 
 def get_all_query(w_file):
+    doc_list, white = get_doc_list()
     query = {}
     for line in open(w_file,'r'):
         temp = line.strip().split()
@@ -34,11 +37,8 @@ def get_all_query(w_file):
     query.pop('SIL',None)
     return query
 
-
-qer_list = []
-qer_time = {}
-def generate_query(lan):
-    w_file = os.path.join(zrc_data_path,lan,'classes',lan+'.wrd')
+def generate_query(lan, dot = 'wrd'):
+    w_file = os.path.join(zrc_data_path,lan,'classes',lan+'.'+dot)
     query_lan = get_all_query(w_file)
     ret_list = []
     dur_list = {}
@@ -50,16 +50,20 @@ def generate_query(lan):
                 ret_list.append(lan+'_'+q+'_'+str(d))
                 dur_list[ret_list[-1]] = query_lan[q][d]
     #qer_list += ret_list
-    qer_time.update(dur_list)
-    return ret_list
-qer_list += generate_query('eng')
-qer_list += generate_query('xit')
+    return ret_list, dur_list 
+
+def get_qer_list():
+    qer_list, qer_time= generate_query('eng')
+    tmp_list, tmp_time= generate_query('xit')
+    qer_list.extend(tmp_list)
+    qer_time.update(tmp_time)
+    return qer_list, qer_time
 
 
 
-
-doc_feat = {}
+#doc_feat = {}
 def parse_feature(lan, ftype):
+    doc_list, white = get_doc_list()
     wav_list = []
     feat = []
     #wav2feat = {}
@@ -110,6 +114,7 @@ def parse_pattern(tok):
     #doc_pattern = {}
     #qer_pattern[tok] = {}
     #doc_pattern[tok] = {}
+    qer_list, qer_time =  get_qer_list()
     M = util.MLF(ph_dist.n2p(tok)+'/result/result.mlf')
     lan = tok[:3]
     for q in qer_list:
@@ -152,16 +157,28 @@ def parse_doc_pattern(doc,tok):
 #qer_pattern, doc_pattern = parse_pattern()
 #print doc_pattern[doc_list[0]]
 #print qer_pattern[qer_list[0]]
-tok_list = ph_dist.tokset
 #parse_pattern(tok_list[1])
 #for t in tok_list[:1]:
 #parse_pattern(t)
-ftp_list = ['mfc','mbf']
 
-pickle.dump(ftp_list,open('list/ftp_list.dat','w'))
-pickle.dump(tok_list,open('list/tok_list.dat','w'))
-pickle.dump(doc_list,open('list/doc_list.dat','w'))
-pickle.dump(qer_list,open('list/qer_list.dat','w'))
+def execute(): 
+    ftp_list = ['mfc','mbf']
+    tok_list = ph_dist.tokset
+    doc_list, __ = get_doc_list()
+    qer_list, qer_time = get_qer_list()
+    pickle.dump(ftp_list,open('list/ftp_list.dat','w'))
+    pickle.dump(tok_list,open('list/tok_list.dat','w'))
+    pickle.dump(doc_list,open('list/doc_list.dat','w'))
+    pickle.dump(qer_list,open('list/qer_list.dat','w'))
+    pickle.dump(qer_time,open('list/qer_time.dat','w'))
+
+
+ftp_list = pickle.load(open('list/ftp_list.dat','r'))
+tok_list = pickle.load(open('list/tok_list.dat','r'))
+doc_list = pickle.load(open('list/doc_list.dat','r'))
+qer_list = pickle.load(open('list/qer_list.dat','r'))
+qer_time = pickle.load(open('list/qer_time.dat','r'))
+
 def generate_ftp_list():
     return pickle.load(open('list/ftp_list.dat','r'))
 def generate_tok_list():
@@ -172,12 +189,15 @@ def generate_qer_list():
     return pickle.load(open('list/qer_list.dat','r'))
 
 if __name__=='__main__':
-    parse_feature('eng','mfc')
-    parse_feature('eng','mbf')
-    parse_feature('xit','mfc')
-    parse_feature('xit','mbf')
-    for q in qer_list:
-        parse_qer_feature(q,'mfc')
-        parse_qer_feature(q,'mbf')
-    for t in tok_list:
-        parse_pattern(t)
+    if sys.argv[1] =='run':
+        parse_feature('eng','mfc')
+        parse_feature('eng','mbf')
+        parse_feature('xit','mfc')
+        parse_feature('xit','mbf')
+        for q in qer_list:
+            parse_qer_feature(q,'mfc')
+            parse_qer_feature(q,'mbf')
+        for t in tok_list:
+            parse_pattern(t)
+    if sys.argv[2] == 'execute':
+        execute()
