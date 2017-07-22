@@ -239,7 +239,7 @@ if __name__=='__main__':
         rbs = RectBivariateSpline(x_list,y_list,z_list,kx=2,ky=2)#,bbox = [m_min, m_max, n_min, n_max])
         zv = rbs(xi,yi)
      
-        CS = ax.contourf(xv, yv, zv, cont_density, vmin=zmin, vmax=zmax)
+        CS = ax.contourf(xv, yv, zv, cont_density, vmin=zmin, vmax=zmax, cmap='Greys_r')
         #plt.colorbar(CS)
         ax.scatter(x, y, facecolor='w')
         ax.set_title(full[t])
@@ -252,7 +252,7 @@ if __name__=='__main__':
         #plt.imshow(grid_0.T)
         #plt.gcf().set_size_inches(6, 6)
     
-    l ='xit'
+    l ='eng'
     fig, axarr = plt.subplots(2, 3)
     zlim = get_zlim(l)
     #zlim = [0,.5]
