@@ -4,6 +4,7 @@ import numpy as np
 from scipy.interpolate import RectBivariateSpline
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib
 info_text ='''\
 eng iter1_MR0_50_3 0.170633116433
 eng iter1_MR1_50_3 0.152116919102
@@ -267,8 +268,12 @@ if __name__=='__main__':
         plt.setp(axarr[p].get_axes(), visible=False)
         #fig.colorbar(CS ,axarr[p].get_axes())
     cbar_ax = fig.add_axes([0.75, 0.12, 0.05, 0.3])
-    CS.set_clim(zlim)
-    plt.colorbar(CS, cax=cbar_ax)
+    #CS.set_clim(zlim)
+    #plt.colorbar(CS, cax=cbar_ax)
+    zmin, zmax = zlim
+    norm = matplotlib.colors.Normalize(vmin=zmin, vmax=zmax)
+    cb1 = matplotlib.colorbar.ColorbarBase(cbar_ax, cmap='Greys_r', norm=norm)
+    cb1.set_label('MAP')
 
     #plt.setp([a.get_xticklabels() for a in axarr[0,:]],visible=False)
     #plt.setp([a.get_yticklabels() for a in axarr[:,1]],visible=False)
